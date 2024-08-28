@@ -10,7 +10,7 @@ from aiogram.dispatcher.dispatcher import Dispatcher
 from aiogram.filters import Command
 
 from aiogram import types
-from helpers.get_emoji import get_emoji
+from helpers.scripts.get_emoji import get_emoji
 
 TOKEN = os.getenv('TOKEN')
 api_key = os.getenv('WEATHER_API_KEY')
