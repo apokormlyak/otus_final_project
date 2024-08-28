@@ -3,9 +3,4 @@
 TOKEN = '...'
 WEATHER_API_KEY = '...'
 
-#   PostgreSQL
-#==========================================
-POSTGRES_DB=weather_db
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=password
-PGDATA=/home/postgresql/data
+ASYNC_DATABASE_URL = '...'
