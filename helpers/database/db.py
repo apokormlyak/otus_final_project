@@ -4,9 +4,22 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import DeclarativeMeta, registry, sessionmaker
 
-from db_config import settings
+import os
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    APP_NAME: str = "BotSynoptic"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+psycopg2://admin:password@postgres/weather_db")
+    ASYNC_DATABASE_URL: str = os.getenv(
+        "ASYNC_DATABASE_URL", "postgresql+asyncpg://postgres:password@0.0.0.0:5434/postgres"
+    )
+
+
+settings = Settings()
 
 async_engine = create_async_engine(settings.ASYNC_DATABASE_URL)
+
 async_session = sessionmaker(
     async_engine,
     class_=AsyncSession,
