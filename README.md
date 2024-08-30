@@ -15,4 +15,11 @@ API для запрашивания погоды:  https://openweathermap.org/cu
 ## Для запуска локального запуска приложения:
 
 1. Запустить postgres: docker-compose up --build
-2. Запустить бот: python main.py
+
+
+__________________________________________________________
+
+### Для инициализации алембик:
+1. alembic init -t async alembic
+2. alembic revision --autogenerate
+3. alembic upgrade head

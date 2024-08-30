@@ -4,9 +4,10 @@ WORKDIR /app
 
 RUN pip install --upgrade pip
 
-COPY ./otus_final_project .
+COPY . .
 
 RUN pip install -r requirements.txt
 
-RUN sed -i 's/\r$//g' docker-build/start && chmod +x docker-build/start
+COPY ./docker/start.sh /start
+RUN sed -i 's/\r$//g' /start && chmod +x /start
 
