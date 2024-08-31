@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class Users(BaseModel):
     login: str
-    favorite_cities: list[str]
+    favorite_cities: list[int]
 
 
 class CityRequest(BaseModel):

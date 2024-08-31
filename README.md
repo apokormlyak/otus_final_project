@@ -12,14 +12,16 @@ t.me/SuperEasyWeatherBot
 API для запрашивания погоды:  https://openweathermap.org/current
 
 
+__________________________________________________________
+
+
 ## Для запуска локального запуска приложения:
 
-1. Запустить postgres: docker-compose up --build
+1. Запустить бот: docker-compose up --build
+
+## Для накатывания миграций
+
+1. docker exec -it tele_bot alembic revision --autogenerate
 
 
 __________________________________________________________
-
-### Для инициализации алембик:
-1. alembic init -t async alembic
-2. alembic revision --autogenerate
-3. alembic upgrade head

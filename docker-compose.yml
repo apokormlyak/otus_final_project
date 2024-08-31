@@ -1,16 +1,17 @@
 services:
     postgres:
         environment:
-          POSTGRES_DB: postgres
-          POSTGRES_USER: postgres
+          POSTGRES_DB: test_db
+          POSTGRES_USER: admin
           POSTGRES_PASSWORD: password
+          PGDATA: "/home/postgresql/data"
         image: postgres:13.1
         restart: always
         ports:
-            - "5434:5432"
+            - "5440:5432"
         volumes:
-          - db_data:/home/postgresql
-          - db_data:/var/log/postgresql
+          - db_data_1:/home/postgresql
+          - db_data_1:/var/log/postgresql
         networks:
           - net
 
@@ -23,19 +24,17 @@ services:
       volumes:
         - ./:/app/
       command: bash -c "python main.py"
-      environment:
-        - DATABASE_URL=postgresql+asyncpg://postgres:password@0.0.0.0:5434/postgres
       env_file:
         - environment
-      expose:
-        - 8080
       ports:
         - 8080:8080
       depends_on:
         - postgres
+      networks:
+        - net
 networks:
   net:
 
 volumes:
-    db_data:
+    db_data_1:
         external: true
