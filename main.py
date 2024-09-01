@@ -1,5 +1,6 @@
 import math
 import os
+import logging
 
 import asyncio
 import datetime
@@ -12,6 +13,8 @@ from aiogram.filters import Command
 from aiogram import types
 from helpers.scripts.get_emoji import get_emoji
 
+logger = logging.getLogger(__name__)
+
 TOKEN = os.getenv('TOKEN')
 api_key = os.getenv('WEATHER_API_KEY')
 bot = Bot(token=TOKEN)
@@ -21,6 +24,7 @@ dp = Dispatcher()
 async def main():
     @dp.message(Command("start"))
     async def start_command(message: types.Message):
+        logger.info(message)
         await message.reply("Привет! Напиши мне название города и я пришлю сводку погоды")
 
     @dp.message()
