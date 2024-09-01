@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped
 
 from .db import Base
-from sqlalchemy import String, Integer, Column, ARRAY
+from sqlalchemy import String, Integer, Column, ForeignKey
 
 
 class User(Base):
@@ -9,10 +9,9 @@ class User(Base):
 
     id: Mapped[int] = Column(Integer, primary_key=True)
     login: Mapped[str] = Column(String(length=128), index=True, nullable=False, unique=True)
-    favorite_cities = Column(ARRAY(Integer), nullable=True)
 
     def __repr__(self) -> str:
-        return f"User(id={self.id!r}, login={self.login!r})"
+        return f"User(id={self.id!r}, login={self.login!r}, favorite_cities={self.favorite_cities!r})"
 
 
 class Cities(Base):
@@ -24,3 +23,11 @@ class Cities(Base):
 
     def __repr__(self) -> str:
         return f"City(id={self.id!r}, name={self.name!r}, requests_count = {self.requests_count})"
+
+
+class UserData(Base):
+    __tablename__ = 'user_data'
+
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    user_login = Column(ForeignKey("user.login", ondelete="CASCADE"), index=True, nullable=True)
+    city_id = Column(ForeignKey("city.id", ondelete="CASCADE"), index=True, nullable=True)

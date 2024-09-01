@@ -12,6 +12,9 @@ from aiogram.filters import Command
 
 from aiogram import types
 from helpers.scripts.get_emoji import get_emoji
+from helpers.crud.crud import (create_user, create_city,
+                               update_user_data, increase_city_counter)
+from helpers.database import get_async_session
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +27,20 @@ dp = Dispatcher()
 async def main():
     @dp.message(Command("start"))
     async def start_command(message: types.Message):
-        logger.info(message)
-        await message.reply("Привет! Напиши мне название города и я пришлю сводку погоды")
+
+        async for session in get_async_session():
+            user = await create_user(login=message.dict()['chat']['username'], session=session)
+            await message.reply(f"Привет, {message.dict()['chat']['first_name']}!"
+                                f" Напиши мне название города и я пришлю сводку погоды")
 
     @dp.message()
     async def get_weather(message: types.Message):
-        try:
+        # try:
+        async for session in get_async_session():
             url = (f"http://api.openweathermap.org/data/"
                    f"2.5/weather?q={message.text}&lang=ru&units=metric&appid={api_key}")
             response = requests.get(url)
             data = response.json()
-            print(data)
             city = data["name"]
             cur_temp = data["main"]["temp"]
             humidity = data["main"]["humidity"]
@@ -48,6 +54,13 @@ async def main():
                 data["sys"]["sunset"]) - datetime.datetime.fromtimestamp(
                 data["sys"]["sunrise"])
             wd = get_emoji(data)
+
+            await create_city(session=session, name=data["name"])
+            await increase_city_counter(session=session, name=data["name"])
+            await update_user_data(session=session,
+                                   user_login=message.dict()['chat']['username'],
+                                   city_name=data["name"])
+
             await message.reply(f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
                                 f"Погода в городе: {city}\n"
                                 f"Температура: {cur_temp}°C {wd}\n"
@@ -59,8 +72,9 @@ async def main():
                                 f"Продолжительность дня: {length_of_the_day}\n"
                                 f"Хорошего дня!"
                                 )
-        except:
-            await message.reply("Я не распознал город. Проверь название.")
+
+    # except:
+    #     await message.reply("Я не распознал город. Проверь название.")
     await dp.start_polling(bot)
 
 
