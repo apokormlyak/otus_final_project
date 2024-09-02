@@ -11,9 +11,7 @@ from ..database.schemes import UserData as UserDataScheme
 from translate import Translator
 from ..scripts.language import detect
 
-
 translator = Translator(to_lang="ru", from_lang='en')
-
 
 logger = logging.getLogger(__name__)
 
@@ -55,27 +53,36 @@ async def update_user(session: AsyncSession, user_login: str, **kwargs):
     return is_updated
 
 
+async def get_users_data(session: AsyncSession, user_login: str):
+    try:
+        stmt = select(UserData).where(UserData.user_login == user_login)
+        result = await session.execute(stmt)
+        data = result.scalars().all()
+        return data
+    except:
+        logger.exception(f'Исключение в get_users_top_cities_requests')
+
+
 async def update_user_data(session: AsyncSession, user_login: str, city_name):
     is_updated = False
-    logger.exception(f'city_name!!!!{city_name}')
     if detect(city_name) == 'en':
         city_name = translator.translate(city_name)
         logger.exception(city_name)
 
-    city_id = await get_city(session, filters=[Cities.name == city_name.lower()])
+    city = await get_city(session, filters=[Cities.name == city_name.lower()])
 
     try:
         result = await session.execute(select(UserData).filter(
             and_(
                 UserData.user_login == user_login,
-                UserData.city_id == city_id)
-            )
+                UserData.city_id == city.id)
+        )
         )
 
         res = result.scalars().first()
 
         if res is None:
-            data = UserDataScheme(user_login=user_login, city_id=city_id)
+            data = UserDataScheme(user_login=user_login, city_id=city.id)
             stmt = insert(UserData).values(**data.dict())
             await session.execute(stmt)
             await session.commit()
@@ -107,9 +114,20 @@ async def get_city(session: AsyncSession, filters: None | list[BinaryExpression
             result = await session.execute(stmt)
             city = result.scalars().first()
             logger.exception(city)
-            return city.id
+            return city
     except:
         logger.exception(f'Исключение в get_city, filters: {filters} ')
+
+
+async def get_top_cities_requests(session: AsyncSession):
+    try:
+        stmt = select(Cities).order_by(Cities.requests_count.desc()).limit(3)
+
+        result = await session.execute(stmt)
+        cities = result.scalars().all()
+        return cities
+    except:
+        logger.exception(f'Исключение в get_top_cities_requests')
 
 
 async def update_city(session: AsyncSession, name: str, **kwargs):
