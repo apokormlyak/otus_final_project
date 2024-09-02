@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy import insert, select, update, BinaryExpression, BooleanClauseList, ColumnOperators
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, or_, not_
 
 from ..database.models import User, Cities, UserData
 from ..database.schemes import Users as UserCreateScheme
@@ -62,13 +63,16 @@ async def update_user_data(session: AsyncSession, user_login: str, city_name):
         logger.exception(city_name)
 
     city_id = await get_city(session, filters=[Cities.name == city_name.lower()])
-    logger.exception(city_id)
 
     try:
-        result = await session.execute(select(UserData).where(UserData.user_login == user_login
-                                                              and UserData.city_id == city_id))
+        result = await session.execute(select(UserData).filter(
+            and_(
+                UserData.user_login == user_login,
+                UserData.city_id == city_id)
+            )
+        )
+
         res = result.scalars().first()
-        logger.exception(res)
 
         if res is None:
             data = UserDataScheme(user_login=user_login, city_id=city_id)
