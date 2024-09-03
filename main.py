@@ -45,12 +45,23 @@ async def main():
     async def menu(message: types.Message):
         await message.reply(messages.menu, reply_markup=keyboard.menu)
 
+    @dp.callback_query(F.data == "get_weather")
+    async def get_weather(clbck: CallbackQuery):
+        await clbck.message.answer(messages.get_weather)
+
     @dp.callback_query(F.data == "users_top_cities_requests")
     async def users_top_cities_requests(clbck: CallbackQuery):
-
-        async for session in get_async_session():
-            data = await get_users_data(user_login=user_login, session=session)
-            await clbck.message.answer('data = {data}'.format(data=data))
+        try:
+            async for session in get_async_session():
+                data = await get_users_data(user_login=user_login, session=session)
+                if data:
+                    cities = ', '.join(data)
+                    logger.exception(cities)
+                    await clbck.message.answer(messages.users_top_cities_requests + cities, reply_markup=keyboard.menu)
+                else:
+                    await clbck.message.answer(messages.users_top_cities_requests_first_meet)
+        except NameError:
+            await clbck.message.answer(messages.greet_unknown_user)
 
     @dp.callback_query(F.data == "top_cities_requests")
     async def top_cities_requests(clbck: CallbackQuery):

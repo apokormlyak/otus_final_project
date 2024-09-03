@@ -55,9 +55,10 @@ async def update_user(session: AsyncSession, user_login: str, **kwargs):
 
 async def get_users_data(session: AsyncSession, user_login: str):
     try:
-        stmt = select(UserData).where(UserData.user_login == user_login)
+        stmt = select(Cities.name).join(UserData).where(UserData.user_login == user_login)
         result = await session.execute(stmt)
         data = result.scalars().all()
+        logger.exception(data)
         return data
     except:
         logger.exception(f'Исключение в get_users_top_cities_requests')
