@@ -1,8 +1,9 @@
 import logging
 
+from asyncpg import ForeignKeyViolationError
 from sqlalchemy import insert, select, update, BinaryExpression, BooleanClauseList, ColumnOperators
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, not_
+from sqlalchemy import and_
 
 from ..database.models import User, Cities, UserData
 from ..database.schemes import Users as UserCreateScheme
@@ -30,38 +31,31 @@ async def create_user(session: AsyncSession, login: str):
 async def get_user(session: AsyncSession, filters: None | list[BinaryExpression
                                                                | BooleanClauseList | ColumnOperators] = None):
     user = None
-    try:
-        stmt = select(User)
-        if filters:
-            stmt = stmt.where(*filters)
-            result = await session.execute(stmt)
-            user = result.scalars().first()
-    except:
-        logger.exception(f'Исключение в get_user, filters: {filters} ')
+    stmt = select(User)
+    if filters:
+        stmt = stmt.where(*filters)
+        result = await session.execute(stmt)
+        user = result.scalars().first()
     return user
 
 
 async def update_user(session: AsyncSession, user_login: str, **kwargs):
     is_updated = False
-    try:
+    result = await session.execute(select(User).where(User.login == user_login))
+    user = result.scalars().first()
+    if user is not None:
         stmt = update(User).where(User.login == user_login).values(**kwargs)
         await session.execute(stmt)
         await session.commit()
         is_updated = True
-    except:
-        logger.exception(f'Исключение в update_user, user_login: {user_login} ')
     return is_updated
 
 
 async def get_users_data(session: AsyncSession, user_login: str):
-    try:
-        stmt = select(Cities.name).join(UserData).where(UserData.user_login == user_login)
-        result = await session.execute(stmt)
-        data = result.scalars().all()
-        logger.exception(data)
-        return data
-    except:
-        logger.exception(f'Исключение в get_users_top_cities_requests')
+    stmt = select(Cities.name).join(UserData).where(UserData.user_login == user_login)
+    result = await session.execute(stmt)
+    data = result.scalars().all()
+    return data
 
 
 async def update_user_data(session: AsyncSession, user_login: str, city_name):
@@ -71,8 +65,9 @@ async def update_user_data(session: AsyncSession, user_login: str, city_name):
         logger.exception(city_name)
 
     city = await get_city(session, filters=[Cities.name == city_name.lower()])
-
-    try:
+    result = await session.execute(select(User).where(User.login == user_login))
+    user = result.scalars().first()
+    if user is not None:
         result = await session.execute(select(UserData).filter(
             and_(
                 UserData.user_login == user_login,
@@ -88,8 +83,6 @@ async def update_user_data(session: AsyncSession, user_login: str, city_name):
             await session.execute(stmt)
             await session.commit()
             is_updated = True
-    except:
-        logger.exception(f'Исключение в update_user, user_login: {user_login} ')
     return is_updated
 
 
@@ -108,27 +101,20 @@ async def create_city(session: AsyncSession, name: str):
 
 async def get_city(session: AsyncSession, filters: None | list[BinaryExpression
                                                                | BooleanClauseList | ColumnOperators] = None):
-    try:
-        stmt = select(Cities)
-        if filters:
-            stmt = stmt.where(*filters)
-            result = await session.execute(stmt)
-            city = result.scalars().first()
-            logger.exception(city)
-            return city
-    except:
-        logger.exception(f'Исключение в get_city, filters: {filters} ')
+    stmt = select(Cities)
+    if filters:
+        stmt = stmt.where(*filters)
+        result = await session.execute(stmt)
+        city = result.scalars().first()
+        return city
 
 
 async def get_top_cities_requests(session: AsyncSession):
-    try:
-        stmt = select(Cities).order_by(Cities.requests_count.desc()).limit(3)
+    stmt = select(Cities).order_by(Cities.requests_count.desc()).limit(3)
 
-        result = await session.execute(stmt)
-        cities = result.scalars().all()
-        return cities
-    except:
-        logger.exception(f'Исключение в get_top_cities_requests')
+    result = await session.execute(stmt)
+    cities = result.scalars().all()
+    return cities
 
 
 async def update_city(session: AsyncSession, name: str, **kwargs):
@@ -140,7 +126,7 @@ async def update_city(session: AsyncSession, name: str, **kwargs):
         await session.execute(stmt)
         await session.commit()
         is_updated = True
-    except:
+    except ForeignKeyViolationError:
         logger.exception(f'Исключение в update_city, city_name: {name} ')
     return is_updated
 
@@ -158,6 +144,6 @@ async def increase_city_counter(session: AsyncSession, name: str):
         await session.execute(stmt)
         await session.commit()
         is_updated = True
-    except:
+    except ForeignKeyViolationError:
         logger.exception(f'Исключение в increase_city_counter, city_name: {name} ')
     return is_updated

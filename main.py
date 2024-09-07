@@ -119,7 +119,7 @@ async def main():
                         length_of_the_day=length_of_the_day
                     )
                 )
-        except:
+        except KeyError:
             await message.answer(messages.exception_weather_reply)
 
     await dp.start_polling(bot)
